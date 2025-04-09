@@ -37,12 +37,14 @@ class API :
         self.session.run(cqlCreate)
     
     def getalldata(self, type):
-        cqlGetAll = f"MATCH (x:{type}) RETURN x"
+        cqlGetAll = f"MATCH (x:{type}) RETURN x.name"
+        print(cqlGetAll)
         data = self.session.run(cqlGetAll)
         return data
 
     def getEdge (self, type, universite):
-        cqlGetEdge = f"MATCH (x:{type})-[r]->(y:{universite}) RETURN x.name, y.name"
+        cqlGetEdge = "MATCH (x:"+type+" {name:'"+universite+"'})-[r]->(y:university) RETURN y.name"
+        print(cqlGetEdge)
         data = self.session.run(cqlGetEdge)
         return data
 
@@ -57,7 +59,7 @@ if __name__ == '__main__':
         for ligne in fichier:
             mdp = ligne
     api = API(mdp)
-    
+    '''
     api.createTable("university", 
                     {"cornell": "Cornell University", "yale": "Yale University", "princeton": "Princeton University", "harvard": "Harvard University"}, 
                     { "cornell" : ("yale", 259),  "cornell" : ("princeton", 210),  "cornell" : ("harvard", 327),
@@ -68,9 +70,13 @@ if __name__ == '__main__':
     
     print("Obtention de toutes les données")
     all = api.getalldata("university")
-    print(all)
+    for node in all :
+        print(node)
     
     print("Obtention des edges avec Harvard")
-    spec = api.getEdge("university", "harvard")
-    print(spec)
+    spec = api.getEdge("university", "Harvard University")
+    for node in spec :
+        print(node)'''
+        
+        
     api.close_connection()
