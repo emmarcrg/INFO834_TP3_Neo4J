@@ -15,27 +15,35 @@ class API :
     def createTable (self,type, noms, links, type_link): 
         '''
         type : le type de l'objet que nous créons => string
-        nom : nom du ou des objet que nous créons => dictionnaire
+        noms : nom du ou des objet que nous créons => dictionnaire
         links : ensemble des liens que nous créons => dictionnaire
+        type_link : type du lien qui relie nos objets => string ; les liens sont supposés réciproques
         '''
         self.type_link = type_link
         nodes = []
-        relationships = []
 
         # Construire les nœuds
         for nom in noms:
-            nodes.append(f"({nom}:{type} {{ name: '{noms[nom]}'}})")
-
-        # Construire les relations
-        for link in links:
-            relationships.append(f"({link})-[:{type_link} {{miles: {links[link][1]}}}]->({links[link][0]})")
-
+            simple_name=nom.split('-')[0]
+            nodes.append(f"({simple_name}:{type} {{ name: '{nom}'}})")
+            
         # Joindre les nœuds et relations avec des virgules
-        cqlCreate = "CREATE " + ", ".join(nodes + relationships)
+        cqlCreate = "CREATE " + ", ".join(nodes)
         print(cqlCreate)
         
         self.session.run(cqlCreate)
     
+    def setLiens(self, links, type_link):
+        relationships = []
+        # Construire les relations
+        for link in links:
+            relationships.append(f"({link})-[:{type_link} {{{type_link}: {links[link][1]}}}]->({links[link][0]})")
+        
+        cqlCreate = "CREATE " + ", ".join(relationships)
+        print(cqlCreate)
+        
+        self.session.run(cqlCreate)
+        
     def getalldata(self, type):
         cqlGetAll = f"MATCH (x:{type}) RETURN x.name"
         print(cqlGetAll)
@@ -78,5 +86,5 @@ if __name__ == '__main__':
     for node in spec :
         print(node)'''
         
-        
+    
     api.close_connection()
