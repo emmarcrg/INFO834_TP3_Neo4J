@@ -12,21 +12,27 @@ class API :
         self.driver = GraphDatabase.driver(uri, auth=("neo4j", mdp))
         self.session = self.driver.session()
     
-    def createTable (self,type, noms, links, type_link): 
+    def createTable (self,type, noms): 
         '''
         type : le type de l'objet que nous créons => string
         noms : nom du ou des objet que nous créons => dictionnaire
-        links : ensemble des liens que nous créons => dictionnaire
-        type_link : type du lien qui relie nos objets => string ; les liens sont supposés réciproques
         '''
-        self.type_link = type_link
         nodes = []
 
         # Construire les nœuds
         for nom in noms:
-            simple_name=nom.split('-')[0]
-            nodes.append(f"({simple_name}:{type} {{ name: '{nom}'}})")
-            
+            if "'" in nom : 
+                nom=nom.replace("'", "")
+            if "-" in nom:
+                temp=nom.split('-')[0]
+                nodes.append(f"({temp}:{type} {{ name: \"{nom}\"}})")
+            if " " in nom : 
+                temp=nom.split(' ')[0]
+                nodes.append(f"({temp}:{type} {{ name: \"{nom}\"}})")
+            else : 
+                nodes.append(f"({nom}:{type} {{ name: \"{nom}\"}})")
+        
+        print("Nœuds générés :", nodes)
         # Joindre les nœuds et relations avec des virgules
         cqlCreate = "CREATE " + ", ".join(nodes)
         print(cqlCreate)
@@ -34,6 +40,10 @@ class API :
         self.session.run(cqlCreate)
     
     def setLiens(self, links, type_link):
+        '''
+        links : ensemble des liens que nous créons => dictionnaire
+        type_link : type du lien qui relie nos objets => string ; les liens sont supposés réciproques
+        '''
         relationships = []
         # Construire les relations
         for link in links:
@@ -70,12 +80,12 @@ if __name__ == '__main__':
     '''
     api.createTable("university", 
                     {"cornell": "Cornell University", "yale": "Yale University", "princeton": "Princeton University", "harvard": "Harvard University"}, 
-                    { "cornell" : ("yale", 259),  "cornell" : ("princeton", 210),  "cornell" : ("harvard", 327),
+                    )
+    api.setLiens({ "cornell" : ("yale", 259),  "cornell" : ("princeton", 210),  "cornell" : ("harvard", 327),
                      "yale" : ("cornell", 259),  "yale" : ("princeton", 133),  "yale" : ("harvard", 133),
                      "harvard" : ("cornell", 327),  "harvard" : ("princeton", 260),  "harvard" : ("yale", 133),
                      "princeton" : ("cornell", 210),  "princeton" : ("harvard", 260),  "princeton" : ("yale", 133)}, 
                     "connects_in")
-    
     print("Obtention de toutes les données")
     all = api.getalldata("university")
     for node in all :
